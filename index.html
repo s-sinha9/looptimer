@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Multi-Timer & Loop Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f3f4f6; }
+        .glass { background: rgba(22, 30, 49, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glow-green:focus { border-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .glow-blue:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-white bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">LoopTimer Studio</h1>
+                <p class="text-sm text-gray-400 mt-1">Create, chain, group, and loop sequential interval configurations.</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-400 bg-gray-900 px-3 py-2 rounded-lg border border-gray-800">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ready for Vercel Deployment
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Panel: Creators -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- 1. Single Timer Creator -->
+                <div class="glass p-6 rounded-2xl">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Create Standalone Timer
+                    </h2>
+                    <form id="timer-form" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Timer Name</label>
+                            <input type="text" id="t-name" required placeholder="e.g., Sprint Interval" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none glow-green text-white">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Duration (Sec)</label>
+                                <input type="number" id="t-duration" min="1" required placeholder="45" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none glow-green text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Loops (0=∞)</label>
+                                <input type="number" id="t-loops" min="1" value="1" placeholder="1" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none glow-green text-white">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm py-2.5 rounded-xl transition duration-200 shadow-lg shadow-emerald-900/20">Add Standalone Timer</button>
+                    </form>
+                </div>
+
+                <!-- 2. Group Creator -->
+                <div class="glass p-6 rounded-2xl">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        Create Routine Group
+                    </h2>
+                    <form id="group-form" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Group Name</label>
+                            <input type="text" id="g-name" required placeholder="e.g., Tabata Circuit" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none glow-blue text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Group Loops (0=∞)</label>
+                            <input type="number" id="g-loops" min="1" value="1" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none glow-blue text-white">
+                        </div>
+                        <div class="border border-gray-800 rounded-xl p-3 bg-gray-950/50">
+                            <span class="block text-xs font-semibold text-gray-400 mb-2">Select Timers for this Group:</span>
+                            <div id="group-timers-list" class="space-y-2 max-h-36 overflow-y-auto text-sm text-gray-400 pr-1">
+                                <!-- Generated via Javascript dynamically -->
+                                <p class="text-xs italic text-gray-600">Create global timers above first to bundle them into a group.</p>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm py-2.5 rounded-xl transition duration-200 shadow-lg shadow-blue-900/20">Bundle Into Group</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Panel: Dashboards & Monitors -->
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Active Running Global Node Overlay -->
+                <div id="active-monitor" class="glass p-6 rounded-2xl border-l-4 border-emerald-500 hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span id="active-context-tag" class="text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">STANDALONE</span>
+                            <h3 id="active-title" class="text-2xl font-bold text-white mt-2">---</h3>
+                            <p id="active-stats" class="text-sm text-gray-400 mt-1">Timer loop: -/- | Group loop: -/-</p>
+                        </div>
+                        <div class="text-right">
+                            <div id="active-countdown" class="text-5xl font-extrabold tracking-mono text-white font-mono">00:00</div>
+                        </div>
+                    </div>
+                    <!-- Master Stop Button -->
+                    <div class="mt-4 flex gap-2 justify-end">
+                        <button onclick="pauseGlobalTimer()" id="pause-btn" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition">Pause</button>
+                        <button onclick="stopGlobalTimer()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition">Terminate</button>
+                    </div>
+                </div>
+
+                <!-- Timers & Groups Explorer -->
+                <div>
+                    <h2 class="text-xl font-bold text-white mb-4">Your Configurations</h2>
+                    <div id="empty-state" class="glass rounded-2xl p-12 text-center border-dashed border-2 border-gray-800">
+                        <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="text-gray-400 font-medium">No timers or configurations configured yet.</p>
+                        <p class="text-xs text-gray-600 mt-1">Use the side panel creators to build out loops and routines.</p>
+                    </div>
+
+                    <!-- Items Box Container -->
+                    <div id="deck-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Effects Context -->
+    <audio id="beep-sound" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" preload="auto"></audio>
+
+    <script>
+        let timersRegistry = [];
+        let groupsRegistry = [];
+        
+        // Runtime Execution Variables
+        let activeInterval = null;
+        let isPaused = false;
+        let executionQueue = [];
+        let queueIndex = 0;
+        let currentTimerDuration = 0;
+        let currentTimerTotalLoops = 1;
+        let currentTimerCurrentLoop = 1;
+        let currentGroupTotalLoops = 1;
+        let currentGroupCurrentLoop = 1;
+
+        const timerForm = document.getElementById('timer-form');
+        const groupForm = document.getElementById('group-form');
+        const deckContainer = document.getElementById('deck-container');
+        const emptyState = document.getElementById('empty-state');
+        const groupTimersList = document.getElementById('group-timers-list');
+        
+        const activeMonitor = document.getElementById('active-monitor');
+        const activeContextTag = document.getElementById('active-context-tag');
+        const activeTitle = document.getElementById('active-title');
+        const activeStats = document.getElementById('active-stats');
+        const activeCountdown = document.getElementById('active-countdown');
+        const pauseBtn = document.getElementById('pause-btn');
+
+        // Initial Registry seed configs
+        window.addEventListener('DOMContentLoaded', () => {
+            timersRegistry = JSON.parse(localStorage.getItem('lt_timers')) || [];
+            groupsRegistry = JSON.parse(localStorage.getItem('lt_groups')) || [];
+            updateUI();
+        });
+
+        function saveState() {
+            localStorage.setItem('lt_timers', JSON.stringify(timersRegistry));
+            localStorage.setItem('lt_groups', JSON.stringify(groupsRegistry));
+        }
+
+        timerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = 't_' + Date.now();
+            const name = document.getElementById('t-name').value;
+            const duration = parseInt(document.getElementById('t-duration').value);
+            const loops = parseInt(document.getElementById('t-loops').value) || 1;
+
+            timersRegistry.push({ id, name, duration, loops });
+            timerForm.reset();
+            saveState();
+            updateUI();
+        });
+
+        groupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('g-name').value;
+            const loops = parseInt(document.getElementById('g-loops').value) || 1;
+            
+            const checkboxes = groupForm.querySelectorAll('input[type="checkbox"]:checked');
+            const selectedTimerIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if(selectedTimerIds.length === 0) {
+                alert('Please check at least one timer node to compose a group bundle.');
+                return;
+            }
+
+            const id = 'g_' + Date.now();
+            groupsRegistry.push({ id, name, loops, timerIds: selectedTimerIds });
+            groupForm.reset();
+            saveState();
+            updateUI();
+        });
+
+        function removeTimer(id) {
+            timersRegistry = timersRegistry.filter(t => t.id !== id);
+            // Cleanup references inside groups
+            groupsRegistry.forEach(g => {
+                g.timerIds = g.timerIds.filter(tid => tid !== id);
+            });
+            groupsRegistry = groupsRegistry.filter(g => g.timerIds.length > 0);
+            saveState();
+            updateUI();
+        }
+
+        function removeGroup(id) {
+            groupsRegistry = groupsRegistry.filter(g => g.id !== id);
+            saveState();
+            updateUI();
+        }
+
+        function updateUI() {
+            // Clear prior states
+            deckContainer.innerHTML = '';
+            groupTimersList.innerHTML = '';
+
+            const totalItems = timersRegistry.length + groupsRegistry.length;
+            if(totalItems === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Populate multi checkbox dynamic sub-selectors inside Groups Form
+            if(timersRegistry.length === 0) {
+                groupTimersList.innerHTML = `<p class="text-xs italic text-gray-600">Create global timers above first to bundle them into a group.</p>`;
+            } else {
+                timersRegistry.forEach(t => {
+                    const row = document.createElement('label');
+                    row.className = "flex items-center gap-2 py-1 px-2 hover:bg-gray-900 rounded cursor-pointer select-none truncate text-xs text-gray-300";
+                    row.innerHTML = `<input type="checkbox" value="${t.id}" class="rounded bg-gray-900 border-gray-700 text-blue-500 focus:ring-0 focus:ring-offset-0"> <span>${t.name} (${t.duration}s)</span>`;
+                    groupTimersList.appendChild(row);
+                });
+            }
+
+            // Render Deck Items
+            // 1. Render Standalones
+            timersRegistry.forEach(t => {
+                const node = document.createElement('div');
+                node.className = "glass p-5 rounded-2xl flex flex-col justify-between border-l-4 border-emerald-500";
+                node.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="text-[10px] font-bold tracking-wider text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded">STANDALONE</span>
+                            <button onclick="removeTimer('${t.id}')" class="text-gray-500 hover:text-red-400 transition">&times;</button>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mt-2 truncate">${t.name}</h4>
+                        <div class="text-sm text-gray-400 mt-1 space-y-0.5">
+                            <p>Interval duration: <strong class="text-white">${formatTime(t.duration)}</strong></p>
+                            <p>Loops targeted: <strong class="text-white">${t.loops === 0 ? 'Infinite (∞)' : t.loops + 'x'}</strong></p>
+                        </div>
+                    </div>
+                    <button onclick="startStandalone('${t.id}')" class="mt-4 w-full bg-gray-900 hover:bg-emerald-950/40 text-emerald-400 border border-emerald-800 hover:border-emerald-600 text-xs font-semibold py-2 rounded-xl transition duration-150">Execute Routine</button>
+                `;
+                deckContainer.appendChild(node);
+            });
+
+            // 2. Render Bundled Groups
+            groupsRegistry.forEach(g => {
+                const node = document.createElement('div');
+                node.className = "glass p-5 rounded-2xl flex flex-col justify-between border-l-4 border-blue-500";
+                
+                // Get human names of items inside group array
+                let childNamesList = g.timerIds.map(tid => {
+                    let targetObj = timersRegistry.find(t => t.id === tid);
+                    return targetObj ? targetObj.name : 'Unknown Node';
+                }).join(' → ');
+
+                node.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="text-[10px] font-bold tracking-wider text-blue-400 bg-blue-950/60 border border-blue-800/40 px-2 py-0.5 rounded">ROUTINE GROUP</span>
+                            <button onclick="removeGroup('${g.id}')" class="text-gray-500 hover:text-red-400 transition">&times;</button>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mt-2 truncate">${g.name}</h4>
+                        <div class="text-sm text-gray-400 mt-1 space-y-0.5">
+                            <p>Group loops count: <strong class="text-white">${g.loops === 0 ? 'Infinite (∞)' : g.loops + 'x'}</strong></p>
+                            <p class="text-xs text-gray-500 italic mt-1 max-w-full truncate">Chain: ${childNamesList}</p>
+                        </div>
+                    </div>
+                    <button onclick="startGroup('${g.id}')" class="mt-4 w-full bg-gray-900 hover:bg-blue-950/40 text-blue-400 border border-blue-800 hover:border-blue-600 text-xs font-semibold py-2 rounded-xl transition duration-150">Run Routine Loop</button>
+                `;
+                deckContainer.appendChild(node);
+            });
+        }
+
+        function formatTime(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // TIMER RUNTIME REVOLUTION STRATEGY
+        function triggerAudioFeedback() {
+            const sound = document.getElementById('beep-sound');
+            if(sound) {
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log("Audio play blocked until direct interactions."));
+            }
+            setTimeout(() => {
+                sound.pause();
+                sound.currentTime = 0; // Reset the audio track back to the beginning
+                console.log("Alarm stopped automatically after 10 seconds.");
+            }, 10000); 
+        }
+
+        function startStandalone(id) {
+            stopGlobalTimer();
+            const timer = timersRegistry.find(t => t.id === id);
+            if (!timer) return;
+
+            activeContextTag.innerText = "STANDALONE";
+            activeContextTag.className = "text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800";
+            activeMonitor.style.borderColor = "#10b981";
+
+            executionQueue = [{ ...timer, parentGroupLoopMax: 1, parentGroupLoopIndex: 1 }];
+            queueIndex = 0;
+            
+            initQueueExecution();
+        }
+
+        function startGroup(id) {
+            stopGlobalTimer();
+            const group = groupsRegistry.find(g => g.id === id);
+            if (!group) return;
+
+            activeContextTag.innerText = `ROUTINE GROUP: ${group.name}`;
+            activeContextTag.className = "text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800";
+            activeMonitor.style.borderColor = "#3b82f6";
+
+            executionQueue = [];
+            // Unpack sequence arrays based on total targeted nested cycles
+            for (let gLoop = 1; gLoop <= group.loops; gLoop++) {
+                group.timerIds.forEach(tid => {
+                    const matchedTimer = timersRegistry.find(t => t.id === tid);
+                    if(matchedTimer) {
+                        executionQueue.push({
+                            ...matchedTimer,
+                            parentGroupLoopMax: group.loops,
+                            parentGroupLoopIndex: gLoop
+                        });
+                    }
+                });
+            }
+
+            queueIndex = 0;
+            initQueueExecution();
+        }
+
+        function initQueueExecution() {
+            if (executionQueue.length === 0 || queueIndex >= executionQueue.length) {
+                stopGlobalTimer();
+                alert("Routine execution pipeline completed successfully!");
+                return;
+            }
+
+            const currentJob = executionQueue[queueIndex];
+            activeTitle.innerText = currentJob.name;
+            activeMonitor.classList.remove('hidden');
+            
+            currentTimerDuration = currentJob.duration;
+            currentTimerTotalLoops = currentJob.loops;
+            currentTimerCurrentLoop = 1;
+            
+            currentGroupTotalLoops = currentJob.parentGroupLoopMax;
+            currentGroupCurrentLoop = currentJob.parentGroupLoopIndex;
+
+            renderActiveCounters();
+            startCountdownTick();
+        }
+
+        function startCountdownTick() {
+            isPaused = false;
+            pauseBtn.innerText = "Pause";
+            pauseBtn.className = "bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition";
+
+            if(activeInterval) clearInterval(activeInterval);
+
+            activeInterval = setInterval(() => {
+                if (isPaused) return;
+
+                currentTimerDuration--;
+                if(currentTimerDuration < 0) {
+                    triggerAudioFeedback();
+                    // Check if current standalone nested iteration loop needs continuation
+                    if (currentTimerCurrentLoop < currentTimerTotalLoops) {
+                        currentTimerCurrentLoop++;
+                        currentTimerDuration = executionQueue[queueIndex].duration;
+                    } else {
+                        // Advance downstream to next configured task node inside pipeline queue
+                        clearInterval(activeInterval);
+                        queueIndex++;
+                        initQueueExecution();
+                        return;
+                    }
+                }
+                renderActiveCounters();
+            }, 1000);
+        }
+
+        function renderActiveCounters() {
+            activeCountdown.innerText = formatTime(currentTimerDuration);
+            activeStats.innerText = `Timer Loops: ${currentTimerCurrentLoop} / ${currentTimerTotalLoops} | Routine Loops: ${currentGroupCurrentLoop} / ${currentGroupTotalLoops}`;
+        }
+
+        function pauseGlobalTimer() {
+            if(!activeInterval) return;
+            isPaused = !isPaused;
+            if(isPaused) {
+                pauseBtn.innerText = "Resume";
+                pauseBtn.className = "bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition";
+            } else {
+                pauseBtn.innerText = "Pause";
+                pauseBtn.className = "bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition";
+            }
+        }
+
+        function stopGlobalTimer() {
+            if(activeInterval) clearInterval(activeInterval);
+            activeInterval = null;
+            executionQueue = [];
+            queueIndex = 0;
+            activeMonitor.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
